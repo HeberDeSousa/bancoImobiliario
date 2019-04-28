@@ -7,7 +7,7 @@ Depois disto, você tem várias opções para rodar a aplicação
 A maneira mais simples para se fazer uma simulação é através da IDE Eclipse ou Spring Tool Suite 
 (que é o eclipse com algumas adaptações para o Spring).
 
-Você deve extrair o conteúdo do arquivobakrupt.zip para a sua pasta que foi definida como workspace ao iniciar o Eclipse
+Você deve extrair o conteúdo do arquivo bakrupt.zip para a sua pasta que foi definida como workspace ao iniciar o Eclipse
 
 Depois disso deverá clicar em File, Import ou simplesmente em "Import projects" na seção Package Explorer
 
@@ -21,11 +21,17 @@ Depois que o projeto for importado, na pasta "src/main/java" e no pacote "com.ba
 existe uma classe chamada "DemoApplication.java"
 esta é a classe principal do projeto.
 
-Para rodar uma simulação, basta clicar nesta classe com o botão direito e 
+Para rodar uma simulação, basta clicar abrir esta classe,
+clicar com o botão direito no método main e 
 clicar em "Run As", "Java Application" ou "Spring Boot Application"
 
 o arquivo gameConfig.txt com os parâmetros de configuração se encontra na pasta
 src/main/resources/static/gameConfig.txt
+
+parâmetros como número de coins inicial, coins ao se completar uma volta
+ou número de rodadas por partida e porta da página de log 
+podem ser alterados e se encontram no arquivo "application.properties" na pasta
+src/main/resources 
 
 basta alterar este arquivo, parar a execução da aplicação com parâmentros diferentes
 (clicar no botão de stop, quadrado vermelho na barra de ferramentas) e iniciar a aplicação novamente

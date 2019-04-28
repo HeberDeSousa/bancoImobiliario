@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,9 @@ public class IndexService {
 	@Autowired
 	private ResourceLoader resourceLoader;
 
+	@Autowired
+	private Environment env;
+
 	public List<Propriedade> carregaTabuleiro() throws Exception {
 
 		List<Propriedade> tabuleiro = new ArrayList<Propriedade>();
@@ -38,55 +42,52 @@ public class IndexService {
 			String line = gameConfig.readLine();
 			if (line == null)
 				break;
-			tabuleiro.add(
-				new Propriedade(
-					Integer.parseInt(line.substring(0, line.indexOf(" "))),
-					Integer.parseInt(line.substring(line.lastIndexOf(" ") + 1, line.length()))
-					, null));
+			tabuleiro.add(new Propriedade(Integer.parseInt(line.substring(0, line.indexOf(" "))),
+					Integer.parseInt(line.substring(line.lastIndexOf(" ") + 1, line.length())), null));
 		}
 
 		return tabuleiro;
 	}
-	
+
 	public List<Jogador> carregaJogadores() {
-		
+
 		Jogador aleatorio = new Aleatorio();
 		Jogador cauteloso = new Cauteloso();
 		Jogador exigente = new Exigente();
 		Jogador impulsivo = new Impulsivo();
-		
+
 		List<Jogador> jogadores = new ArrayList<Jogador>();
 		jogadores.add(aleatorio);
 		jogadores.add(cauteloso);
 		jogadores.add(exigente);
 		jogadores.add(impulsivo);
-		
+
 		return jogadores;
-		
+
 	}
-	
+
 	public Integer numeroDeJogadoresAtivos(List<Jogador> jogadores) {
 		Integer ativos = 0;
-		for(Jogador j: jogadores) {
-			if(j.getAtivo())
+		for (Jogador j : jogadores) {
+			if (j.getAtivo())
 				ativos++;
 		}
 		return ativos;
 	}
-	
+
 	public Jogador defineGanhador(List<Jogador> jogadores) {
 		int vencedor = 0;
 		Integer valor = -1;
-		for (int i=0; i < jogadores.size(); i++) {
+		for (int i = 0; i < jogadores.size(); i++) {
 			if (jogadores.get(i).getCoins() > valor) {
 				vencedor = i;
 				valor = jogadores.get(i).getCoins();
 			}
 		}
-		
+
 		return (jogadores.get(vencedor));
 	}
-	
+
 	public Estatistica rodarSimulacao(Integer partidas) throws Exception {
 		Estatistica estatistica = new Estatistica();
 		Integer totalRodadas = 0;
@@ -103,6 +104,11 @@ public class IndexService {
 		// Status da partida
 		Boolean fimDeJogo;
 
+		// Parametros simulacao
+		Integer rodadas = Integer.parseInt(env.getProperty("simulacao.rodadas"));
+		Integer coinsInicio = Integer.parseInt(env.getProperty("coins.inicio"));
+		Integer coinsVoltaCompleta = Integer.parseInt(env.getProperty("coins.voltaCompleta"));
+
 		for (Integer partida = 1; partida <= partidas; partida++) {
 
 			// reseta partida
@@ -114,14 +120,14 @@ public class IndexService {
 			// reseta os jogadores
 			jogadores.forEach(j -> {
 				j.setAtivo(true);
-				j.setCoins(300);
+				j.setCoins(coinsInicio);
 				j.setPosicao(null);
 			});
 
 			// Define uma ordem aleatória para os jogadores
 			Collections.shuffle(jogadores);
 
-			while (rodada <= 1000 && !fimDeJogo) {
+			while (rodada <= rodadas && !fimDeJogo) {
 
 				for (Jogador j : jogadores) {
 					if (j.getAtivo()) {
@@ -130,9 +136,9 @@ public class IndexService {
 
 						if (j.getPosicao() == null) {
 							j.setPosicao(jogada);
-						} else if (j.getPosicao() + jogada > 20) {
-							j.setPosicao(j.getPosicao() + jogada - 20);
-							j.setCoins(j.getCoins() + 100);
+						} else if (j.getPosicao() + jogada > tabuleiro.size()) {
+							j.setPosicao(j.getPosicao() + jogada - tabuleiro.size());
+							j.setCoins(j.getCoins() + coinsVoltaCompleta);
 						} else {
 							j.setPosicao(j.getPosicao() + jogada);
 						}
@@ -145,7 +151,7 @@ public class IndexService {
 								localAtual.setProprietario(j);
 								j.setCoins(j.getCoins() - localAtual.getPreco());
 							}
-						// Se o local já está ocupado, paga o aluguel para o dono
+							// Se o local já está ocupado, paga o aluguel para o dono
 						} else {
 							// Se o dono é o próprio jogador, não faz nada
 							if (!j.equals(proprietario)) {
@@ -160,7 +166,7 @@ public class IndexService {
 											p.setProprietario(null);
 										}
 									});
-								// Se o aluguel é menor que o saldo, faz o pagamento
+									// Se o aluguel é menor que o saldo, faz o pagamento
 								} else {
 									proprietario.setCoins(proprietario.getCoins() + localAtual.getAluguel());
 									j.setCoins(j.getCoins() - localAtual.getAluguel());
@@ -177,7 +183,7 @@ public class IndexService {
 				}
 				rodada++;
 			}
-			if (rodada > 1000) {
+			if (rodada > rodadas) {
 				estatistica.setTimeout(estatistica.getTimeout() + 1);
 			}
 			totalRodadas += rodada - 1;
@@ -187,22 +193,22 @@ public class IndexService {
 			estatistica.setLogPartidas(estatistica.getLogPartidas() + "Vencedor " + partida.toString() + ": "
 					+ vencedor.getClass().getSimpleName() + "<br>");
 		}
-		estatistica.setMediaTurnos(totalRodadas / 300.0);
+		estatistica.setMediaTurnos(totalRodadas / Double.parseDouble(partidas.toString()));
 
 		Integer maiorNumeroVitorias = 0;
 		for (Jogador j : jogadores) {
 			switch (j.getClass().getSimpleName()) {
 			case "Aleatorio":
-				estatistica.setPercAleatorio(j.getVitorias() / 300.0);
+				estatistica.setPercAleatorio(j.getVitorias() / Double.parseDouble(partidas.toString()));
 				break;
 			case "Cauteloso":
-				estatistica.setPercCauteloso(j.getVitorias() / 300.0);
+				estatistica.setPercCauteloso(j.getVitorias() / Double.parseDouble(partidas.toString()));
 				break;
 			case "Exigente":
-				estatistica.setPercExigente(j.getVitorias() / 300.0);
+				estatistica.setPercExigente(j.getVitorias() / Double.parseDouble(partidas.toString()));
 				break;
 			case "Impulsivo":
-				estatistica.setPercImpulsivo(j.getVitorias() / 300.0);
+				estatistica.setPercImpulsivo(j.getVitorias() / Double.parseDouble(partidas.toString()));
 				break;
 			}
 			if (j.getVitorias() > maiorNumeroVitorias) {
@@ -210,7 +216,7 @@ public class IndexService {
 				maiorNumeroVitorias = j.getVitorias();
 			}
 		}
-		
+
 		System.out.println("Partidas terminadas por time out: " + estatistica.getTimeout().toString());
 		System.out.println("Media de turnos por partida: " + estatistica.getMediaTurnos().toString());
 		System.out.println("Porcentagem de vitórias por comportamento dos jogadores");
@@ -219,7 +225,7 @@ public class IndexService {
 		System.out.println(" - Exigente: " + (estatistica.getPercExigente() * 100) + "%");
 		System.out.println(" - Impulsivo: " + (estatistica.getPercImpulsivo() * 100) + "%");
 		System.out.println("Comportamento que mais vence: " + estatistica.getVencedor());
-		
+
 		return estatistica;
 	}
 
