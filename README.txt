@@ -1,4 +1,4 @@
-!!! IMPORTANTE !!!
+﻿!!! IMPORTANTE !!!
 Antes de tudo é necessário ter o Java pelo menos na versão 8 instalado na máquina.
 
 Depois disto, você tem várias opções para rodar a aplicação 
