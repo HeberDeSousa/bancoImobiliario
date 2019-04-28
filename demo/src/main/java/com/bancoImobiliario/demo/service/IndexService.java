@@ -94,7 +94,7 @@ public class IndexService {
 		// Carrega as propriedades utilizando o arquivo de texto
 		List<Propriedade> tabuleiro = carregaTabuleiro();
 
-		// Carrega e define uma ordem aleatória para os jogadores
+		// Carrega os jogadores
 		List<Jogador> jogadores = carregaJogadores();
 
 		// Contador de rodadas
@@ -145,7 +145,7 @@ public class IndexService {
 								localAtual.setProprietario(j);
 								j.setCoins(j.getCoins() - localAtual.getPreco());
 							}
-							// Se o local já está ocupado, paga o aluguel para o dono
+						// Se o local já está ocupado, paga o aluguel para o dono
 						} else {
 							// Se o dono é o próprio jogador, não faz nada
 							if (!j.equals(proprietario)) {
@@ -160,7 +160,7 @@ public class IndexService {
 											p.setProprietario(null);
 										}
 									});
-									// Se o aluguel é menor que o saldo, faz o pagamento
+								// Se o aluguel é menor que o saldo, faz o pagamento
 								} else {
 									proprietario.setCoins(proprietario.getCoins() + localAtual.getAluguel());
 									j.setCoins(j.getCoins() - localAtual.getAluguel());
